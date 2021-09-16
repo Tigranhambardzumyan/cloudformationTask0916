@@ -23,9 +23,9 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref myLaunchTemplate
         Version: 1
-      # LoadBalancerNames:
-      TargetGroupARNs:
-        - arn:aws:elasticloadbalancing:eu-central-1:482720962971:targetgroup/TargetGroupTigranHambardzumyan/ef9c74ba081f1061  
+      LoadBalancerNames: !Ref LoadBalancer
+      # TargetGroupARNs:
+      #   - arn:aws:elasticloadbalancing:eu-central-1:482720962971:targetgroup/TargetGroupTigranHambardzumyan/ef9c74ba081f1061  
       Tags:
         - Key: Name
           Value: TigranHambardzumyan
@@ -43,42 +43,44 @@ Resources:
         InstanceType: t2.micro
         KeyName: Tigran
         SecurityGroupIds: 
-          - !Ref Subnets 
+          - !Ref SG 
 
   LoadBalancer:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      HealthCheck:
-        Target: HTTP:80/
-        HealthyThreshold: 2
-        UnhealthyThreshold: 3
-        Interval: 10
-        Timeout: 5
-      CrossZone: true
-      Listeners:
-      - InstancePort: 80
-        InstanceProtocol: tcp
-        LoadBalancerPort: 80
-        Protocol: tcp           
-      LoadBalancerName: !Sub ${AWS::StackName}-network-loadbalancer
-      Scheme: internet-facing 
-  # myLaunchTemplate:
-  #   Type: AWS::EC2::LaunchTemplate
-  #   Properties: 
-  #     LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
-  #     LaunchTemplateData: 
-  #       BlockDeviceMappings: 
-  #         - Ebs:
-  #             VolumeSize: 22
-  #             VolumeType: gp3
-  #             DeleteOnTermination: true
-  #             Encrypted: true
-  #           DeviceName: /dev/xvdcz
-  #       ImageId: ami-02354e95b39ca8dec
-  #       InstanceType: t3.micro
-  #       KeyName: my-key-pair-useast1
-  #       Monitoring: 
-  #         Enabled: true
-  #       SecurityGroupIds: 
-  #         - sg-7c227019
-  #         - sg-903004f8          
+      IpAddressType: ipv4
+      Name: NetworkLB
+      Scheme: internet-facing
+      Subnets:
+        - !Select [ 0, !Ref Subnets ]
+        - !Select [ 1, !Ref Subnets ]
+        - !Select [ 2, !Ref Subnets ]
+      Type: network
+     
+     
+     
+     
+     
+     
+     
+      # SubnetMappings:
+      # - AllocationId:
+      #     Fn::GetAtt:
+      #     - EIP1
+      #     - AllocationId
+      #   SubnetId:
+      #     Fn::Select:
+      #     - '0'
+      #     - Ref: Subnet1
+      # - AllocationId:
+      #     Fn::GetAtt:
+      #     - EIP2
+      #     - AllocationId
+      #   SubnetId:
+      #     Fn::Select:
+      #     - '0'
+      #     - Ref: Subnet2
+      # Type:
+      #   Ref: ELBType
+      # IpAddressType:
+      #   Ref: ELBIpAddressType
