@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  Subnets:
+    Description: My Subnets
+    Type: List<AWS::EC2::Subnet::Id>
+  SG:
+    Description: My SecurityGroup
+    Type: AWS::EC2::SecurityGroup::Id
+Resources:
+  myASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: My Auto Scaling Group
+      VPCZoneIdentifier:
+       - !Select [ 0, !Ref Subnets ]
+       - !Select [ 1, !Ref Subnets ]
+       - !Select [ 2, !Ref Subnets ]
+      Cooldown: 300
+      MinSize: 1
+      MaxSize: 2
+      DesiredCapacity: 1
+      HealthCheckGracePeriod: 300
+      LaunchTemplate:
+        LaunchTemplateId: !Ref myLaunchTemplate
+        Version: 1
+      # LoadBalancerNames:
+      TargetGroupARNs:
+        - arn:aws:elasticloadbalancing:eu-central-1:482720962971:targetgroup/TargetGroupTigranHambardzumyan/ef9c74ba081f1061  
+      Tags:
+        - Key: Name
+          Value: TigranHambardzumyan
+          PropagateAtLaunch: "true"
+        - Key: ResourceName
+          Value: TigranHambardzumyan
+          PropagateAtLaunch: "true"
+  
+  myLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties: 
+      LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
+      LaunchTemplateData: 
+        ImageId: ami-05f7491af5eef733a
+        InstanceType: t2.micro
+        KeyName: Tigran
+        SecurityGroupIds: 
+          - !Ref Subnets 
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      HealthCheck:
+        Target: HTTP:80/
+        HealthyThreshold: 2
+        UnhealthyThreshold: 3
+        Interval: 10
+        Timeout: 5
+      CrossZone: true
+      Listeners:
+      - InstancePort: 80
+        InstanceProtocol: tcp
+        LoadBalancerPort: 80
+        Protocol: tcp           
+      LoadBalancerName: !Sub ${AWS::StackName}-network-loadbalancer
+      Scheme: internet-facing 
+  # myLaunchTemplate:
+  #   Type: AWS::EC2::LaunchTemplate
+  #   Properties: 
+  #     LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
+  #     LaunchTemplateData: 
+  #       BlockDeviceMappings: 
+  #         - Ebs:
+  #             VolumeSize: 22
+  #             VolumeType: gp3
+  #             DeleteOnTermination: true
+  #             Encrypted: true
+  #           DeviceName: /dev/xvdcz
+  #       ImageId: ami-02354e95b39ca8dec
+  #       InstanceType: t3.micro
+  #       KeyName: my-key-pair-useast1
+  #       Monitoring: 
+  #         Enabled: true
+  #       SecurityGroupIds: 
+  #         - sg-7c227019
+  #         - sg-903004f8          
