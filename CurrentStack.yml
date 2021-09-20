@@ -1,5 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
+  VPC:
+    Description: Attache the VPC
+    Type: AWS::EC2::VPC::Id
   Subnets:
     Description: My Subnets
     Type: List<AWS::EC2::Subnet::Id>
@@ -67,9 +70,23 @@ Resources:
         - !Select [ 2, !Ref Subnets ]
       Type: network
      
+  Listener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup1
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: TCP     
      
-     
-     
+  TargetGroup1:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub ${AWS::StackName}-TargetGroup
+      Port: 80
+      Protocol: TCP
+      VpcId: !Ref VPC     
      
      
      
