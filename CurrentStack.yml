@@ -23,9 +23,9 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref myLaunchTemplate
         Version: 1
-      LoadBalancerNames: !Ref LoadBalancer
-      # TargetGroupARNs:
-      #   - arn:aws:elasticloadbalancing:eu-central-1:482720962971:targetgroup/TargetGroupTigranHambardzumyan/ef9c74ba081f1061  
+      # LoadBalancerNames: !Ref LoadBalancer
+      TargetGroupARNs:
+        - arn:aws:elasticloadbalancing:eu-central-1:482720962971:targetgroup/TargetGroupTigranHambardzumyan/ef9c74ba081f1061  
       Tags:
         - Key: Name
           Value: TigranHambardzumyan
@@ -44,6 +44,16 @@ Resources:
         KeyName: Tigran
         SecurityGroupIds: 
           - !Ref SG 
+        UserData:
+           Fn::Base64: !Sub |
+              #!/bin/bash
+              sudo apt update -y
+              sudo apt upgrade -y
+              sudo apt install -y apache2
+              sudo systemctl start apache2
+              sudo systemctl enable apache2
+              sudo chmod 777 /var/www/html -R
+              sudo echo "<h1>This is the host Name: $(hostname -f)</h1>" > /var/www/html/index.html
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
