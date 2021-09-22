@@ -6,6 +6,14 @@ Parameters:
   Subnets:
     Description: My Subnets
     Type: List<AWS::EC2::Subnet::Id>
+
+  Mappings: 
+    RegionAndInstanceTypeToAMIID: 
+      eu-central-1: 
+        "HVM64": ami-05f7491af5eef733a
+      us-west-2: 
+        "HVM64": ami-05f7491af5eef733a
+
 Resources:
   SG:
     Type: AWS::EC2::SecurityGroup
@@ -57,7 +65,7 @@ Resources:
     Properties: 
       LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
       LaunchTemplateData: 
-        ImageId: ami-05f7491af5eef733a
+        ImageId:  !FindInMap [RegionMap, !Ref "AWS::Region", HVM64]
         InstanceType: t2.micro
         KeyName: Tigran
         SecurityGroupIds: 
@@ -135,7 +143,7 @@ Resources:
           ScheduledActionBufferTime: 600     
      
 #Instead of Parametrs create a Security Group!!!  +
-#configure LB with CPU
+#configure LB with CPU +
 #Create a map for AMI
 #It isn't secure Change It!! sudo chmod 777 /var/www/html -R
 #Add Conditions and read the guide
