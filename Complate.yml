@@ -34,7 +34,7 @@ Resources:
        - !Select [ 2, !Ref Subnets ]
       Cooldown: 300
       MinSize: 1
-      MaxSize: 2
+      MaxSize: 5
       DesiredCapacity: 1
       HealthCheckGracePeriod: 300
       LaunchTemplate:
@@ -102,7 +102,37 @@ Resources:
       Port: 80
       Protocol: TCP
       VpcId: !Ref VPC     
-     
+
+
+
+  myScalingPlan:
+    Type: AWS::AutoScalingPlans::ScalingPlan
+    Properties:
+      ApplicationSource:
+        TagFilters:
+          - Key: Name
+            Values:
+              - TigranHambardzumyan
+      ScalingInstructions:
+        - MinCapacity: 5
+          MaxCapacity: 10
+          ServiceNamespace: autoscaling
+          ScalableDimension: autoscaling:autoScalingGroup:DesiredCapacity
+          ResourceId: !Join
+            - /
+            - - autoScalingGroup
+              - !Ref myASG
+          TargetTrackingConfigurations:
+            - PredefinedScalingMetricSpecification:
+                PredefinedScalingMetricType: "ASGAverageCPUUtilization"
+              TargetValue: 5
+              EstimatedInstanceWarmup: 10
+          PredefinedLoadMetricSpecification:
+            PredefinedLoadMetricType: "ASGTotalCPUUtilization"
+          PredictiveScalingMode: "ForecastOnly"
+          PredictiveScalingMaxCapacityBehavior: "SetMaxCapacityAboveForecastCapacity"
+          PredictiveScalingMaxCapacityBuffer: 25
+          ScheduledActionBufferTime: 600     
      
 #Instead of Parametrs create a Security Group!!!  +
 #configure LB with CPU
