@@ -6,10 +6,24 @@ Parameters:
   Subnets:
     Description: My Subnets
     Type: List<AWS::EC2::Subnet::Id>
-  SG:
-    Description: My SecurityGroup
-    Type: AWS::EC2::SecurityGroup::Id
 Resources:
+  SG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP port
+      GroupName: !Sub ${AWS::StackName}-Security-Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: TigranHambardzumyan
+        - Key: ResourceName
+          Value: TigranHambardzumyan    
+      VpcId: !Ref VPC    
+
   myASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -90,7 +104,7 @@ Resources:
       VpcId: !Ref VPC     
      
      
-#Instead of Parametrs create a Security Group!!!
+#Instead of Parametrs create a Security Group!!!  +
 #configure LB with CPU
 #Create a map for AMI
 #It isn't secure Change It!! sudo chmod 777 /var/www/html -R
