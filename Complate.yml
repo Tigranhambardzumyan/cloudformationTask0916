@@ -1,17 +1,18 @@
+AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   VPC:
     Description: Attache the VPC
     Type: AWS::EC2::VPC::Id
   Subnets:
-    Description: My Subnets (3 subnets are mandatory)
+    Description: My Subnets
     Type: List<AWS::EC2::Subnet::Id>
 
-Mappings: 
-  RegionMap: 
-    eu-central-1: 
-      "HVM64": "ami-05f7491af5eef733a"
-    us-west-2: 
-      "HVM64": "ami-05f7491af5eef733a"
+  Mappings: 
+    RegionAndInstanceTypeToAMIID: 
+      eu-central-1: 
+        "HVM64": ami-05f7491af5eef733a
+      us-west-2: 
+        "HVM64": ami-05f7491af5eef733a
 
 Resources:
   SG:
@@ -130,15 +131,12 @@ Resources:
             - - autoScalingGroup
               - !Ref myASG
           TargetTrackingConfigurations:
-            - PredefinedScalingMetricSpecification: #change to Custom
-                PredefinedScalingMetricType: "ALBRequestCountPerTarget"
-                # ResourceLabel: [ !GetAtt LoadBalancer.LoadBalancerFullName/TargetGroup.TargetGroupFullName ]
-                # ResourceLabel: $(!GetAtt LoadBalancer.FullName)/$(!GetAtt TargetGroup.TargetGroupFullName)
-                ResourceLabel: !Join [ '/', [!GetAtt LoadBalancer.LoadBalancerFullName, !GetAtt TargetGroup.TargetGroupFullName] ]
+            - PredefinedScalingMetricSpecification:
+                PredefinedScalingMetricType: "ASGAverageCPUUtilization"
               TargetValue: 5
-              EstimatedInstanceWarmup: 60
+              EstimatedInstanceWarmup: 10
           PredefinedLoadMetricSpecification:
-            PredefinedLoadMetricType: "ALBTargetGroupRequestCount"
+            PredefinedLoadMetricType: "ASGTotalCPUUtilization"
           PredictiveScalingMode: "ForecastOnly"
           PredictiveScalingMaxCapacityBehavior: "SetMaxCapacityAboveForecastCapacity"
           PredictiveScalingMaxCapacityBuffer: 25
