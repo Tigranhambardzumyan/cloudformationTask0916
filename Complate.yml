@@ -1,18 +1,17 @@
-AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   VPC:
     Description: Attache the VPC
     Type: AWS::EC2::VPC::Id
   Subnets:
-    Description: My Subnets
+    Description: My Subnets (3 subnets are mandatory)
     Type: List<AWS::EC2::Subnet::Id>
 
-  Mappings: 
-    RegionAndInstanceTypeToAMIID: 
-      eu-central-1: 
-        "HVM64": ami-05f7491af5eef733a
-      us-west-2: 
-        "HVM64": ami-05f7491af5eef733a
+Mappings: 
+  RegionMap: 
+    eu-central-1: 
+      "HVM64": "ami-05f7491af5eef733a"
+    us-west-2: 
+      "HVM64": "ami-05f7491af5eef733a"
 
 Resources:
   SG:
@@ -131,12 +130,15 @@ Resources:
             - - autoScalingGroup
               - !Ref myASG
           TargetTrackingConfigurations:
-            - PredefinedScalingMetricSpecification:
-                PredefinedScalingMetricType: "ASGAverageCPUUtilization"
+            - PredefinedScalingMetricSpecification: #change to Custom
+                PredefinedScalingMetricType: "ALBRequestCountPerTarget"
+                # ResourceLabel: [ !GetAtt LoadBalancer.LoadBalancerFullName/TargetGroup.TargetGroupFullName ]
+                # ResourceLabel: $(!GetAtt LoadBalancer.FullName)/$(!GetAtt TargetGroup.TargetGroupFullName)
+                ResourceLabel: !Join [ '/', [!GetAtt LoadBalancer.LoadBalancerFullName, !GetAtt TargetGroup.TargetGroupFullName] ]
               TargetValue: 5
-              EstimatedInstanceWarmup: 10
+              EstimatedInstanceWarmup: 60
           PredefinedLoadMetricSpecification:
-            PredefinedLoadMetricType: "ASGTotalCPUUtilization"
+            PredefinedLoadMetricType: "ALBTargetGroupRequestCount"
           PredictiveScalingMode: "ForecastOnly"
           PredictiveScalingMaxCapacityBehavior: "SetMaxCapacityAboveForecastCapacity"
           PredictiveScalingMaxCapacityBuffer: 25
@@ -152,3 +154,5 @@ Resources:
       #   - !Select [ 1, !Ref Subnets ]
       #   - !Select [ 2, !Ref Subnets ]
       # Type: network
+#Try to create custom ScalingMetricType      
+#Create a new stack with existing CPU avarge .., when the load is ok, decrise the EC2 instancesa counts to 5 current -
