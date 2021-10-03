@@ -1,3 +1,4 @@
+AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   VPC:
     Description: Attache the VPC
@@ -5,10 +6,32 @@ Parameters:
   Subnets:
     Description: My Subnets
     Type: List<AWS::EC2::Subnet::Id>
-  SG:
-    Description: My SecurityGroup
-    Type: AWS::EC2::SecurityGroup::Id
+
+Mappings: 
+    RegionMap: 
+      eu-central-1: 
+        "HVM64": ami-05f7491af5eef733a
+      us-west-2: 
+        "HVM64": ami-05f7491af5eef733a
+
 Resources:
+  SG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP port
+      GroupName: !Sub ${AWS::StackName}-Security-Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: TigranHambardzumyan
+        - Key: ResourceName
+          Value: TigranHambardzumyan    
+      VpcId: !Ref VPC    
+
   myASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -19,12 +42,12 @@ Resources:
        - !Select [ 2, !Ref Subnets ]
       Cooldown: 300
       MinSize: 1
-      MaxSize: 2
+      MaxSize: 5
       DesiredCapacity: 1
       HealthCheckGracePeriod: 300
       LaunchTemplate:
         LaunchTemplateId: !Ref myLaunchTemplate
-        Version: 1
+        Version: !GetAtt myLaunchTemplate.LatestVersionNumber 
       # LoadBalancerNames: !Ref LoadBalancer
       TargetGroupARNs:
         - Ref: TargetGroup
@@ -42,7 +65,7 @@ Resources:
     Properties: 
       LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
       LaunchTemplateData: 
-        ImageId: ami-05f7491af5eef733a
+        ImageId:  !FindInMap [RegionMap, !Ref "AWS::Region", HVM64]
         InstanceType: t2.micro
         KeyName: Tigran
         SecurityGroupIds: 
@@ -50,13 +73,13 @@ Resources:
         UserData:
            Fn::Base64: !Sub |
               #!/bin/bash
-              sudo apt update -y
-              sudo apt upgrade -y
-              sudo apt install -y apache2
-              sudo systemctl start apache2
-              sudo systemctl enable apache2
-              sudo chmod 777 /var/www/html -R
-              sudo echo "<h1>This is the host Name: $(hostname -f)</h1>" > /var/www/html/index.html
+              apt update -y
+              apt upgrade -y
+              apt install -y apache2
+              systemctl start apache2
+              systemctl enable apache2
+              chmod 777 /var/www/html -R
+              echo "<h1>This is the host Name: $(hostname -f)</h1>" > /var/www/html/index.html
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -87,5 +110,47 @@ Resources:
       Port: 80
       Protocol: TCP
       VpcId: !Ref VPC     
+
+
+
+  myScalingPlan:
+    Type: AWS::AutoScalingPlans::ScalingPlan
+    Properties:
+      ApplicationSource:
+        TagFilters:
+          - Key: Name
+            Values:
+              - TigranHambardzumyan
+      ScalingInstructions:
+        - MinCapacity: 5
+          MaxCapacity: 10
+          ServiceNamespace: autoscaling
+          ScalableDimension: autoscaling:autoScalingGroup:DesiredCapacity
+          ResourceId: !Join
+            - /
+            - - autoScalingGroup
+              - !Ref myASG
+          TargetTrackingConfigurations:
+            - PredefinedScalingMetricSpecification:
+                PredefinedScalingMetricType: "ASGAverageCPUUtilization"
+              TargetValue: 10
+              EstimatedInstanceWarmup: 10
+          PredefinedLoadMetricSpecification:
+            PredefinedLoadMetricType: "ASGTotalCPUUtilization"
+          PredictiveScalingMode: "ForecastOnly"
+          PredictiveScalingMaxCapacityBehavior: "SetMaxCapacityAboveForecastCapacity"
+          PredictiveScalingMaxCapacityBuffer: 25
+          ScheduledActionBufferTime: 600     
      
-     
+#Instead of Parametrs create a Security Group!!!  +
+#configure LB with CPU +
+#Create a map for AMI
+#It isn't secure Change It!! sudo chmod 777 /var/www/html -R
+#Add Conditions and read the guide
+      # Subnets:
+      #   - !Select [ 0, !Ref Subnets ]
+      #   - !Select [ 1, !Ref Subnets ]
+      #   - !Select [ 2, !Ref Subnets ]
+      # Type: network
+#Try to create custom ScalingMetricType      
+#Create a new stack with existing CPU avarge .., when the load is ok, decrise the EC2 instancesa counts to 5 current -

@@ -7,8 +7,8 @@ Parameters:
     Description: My Subnets
     Type: List<AWS::EC2::Subnet::Id>
 
-  Mappings: 
-    RegionAndInstanceTypeToAMIID: 
+Mappings: 
+    RegionMap: 
       eu-central-1: 
         "HVM64": ami-05f7491af5eef733a
       us-west-2: 
@@ -133,7 +133,7 @@ Resources:
           TargetTrackingConfigurations:
             - PredefinedScalingMetricSpecification:
                 PredefinedScalingMetricType: "ASGAverageCPUUtilization"
-              TargetValue: 5
+              TargetValue: 10
               EstimatedInstanceWarmup: 10
           PredefinedLoadMetricSpecification:
             PredefinedLoadMetricType: "ASGTotalCPUUtilization"

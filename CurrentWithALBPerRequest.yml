@@ -129,16 +129,27 @@ Resources:
             - /
             - - autoScalingGroup
               - !Ref myASG
-          TargetTrackingConfigurations:
-            - PredefinedScalingMetricSpecification: #change to Custom
-                PredefinedScalingMetricType: "ALBRequestCountPerTarget"
-                # ResourceLabel: [ !GetAtt LoadBalancer.LoadBalancerFullName/TargetGroup.TargetGroupFullName ]
-                # ResourceLabel: $(!GetAtt LoadBalancer.FullName)/$(!GetAtt TargetGroup.TargetGroupFullName)
-                ResourceLabel: !Join [ '/', [!GetAtt LoadBalancer.LoadBalancerFullName, !GetAtt TargetGroup.TargetGroupFullName] ]
+
+          TargetTrackingConfigurations:   
+            - CustomizedScalingMetricSpecification:
+                # Dimensions: 
+                #  - MetricDimension
+                MetricName: MetricName
+                Namespace: Namespace
+                Statistic: Average
               TargetValue: 5
-              EstimatedInstanceWarmup: 60
-          PredefinedLoadMetricSpecification:
-            PredefinedLoadMetricType: "ALBTargetGroupRequestCount"
+          # TargetTrackingConfigurations:
+          #   - PredefinedScalingMetricSpecification: #change to Custom
+          #       PredefinedScalingMetricType: "ALBRequestCountPerTarget"
+          #       # ResourceLabel: [ !GetAtt LoadBalancer.LoadBalancerFullName/TargetGroup.TargetGroupFullName ]
+          #       # ResourceLabel: $(!GetAtt LoadBalancer.FullName)/$(!GetAtt TargetGroup.TargetGroupFullName)
+          #       ResourceLabel: !Join [ '/', [!GetAtt LoadBalancer.LoadBalancerFullName, !GetAtt TargetGroup.TargetGroupFullName] ]
+          #     TargetValue: 5
+          #     EstimatedInstanceWarmup: 60
+          CustomizedLoadMetricSpecification:
+            MetricName: "ALBTargetGroupRequestCount"
+            Namespace: Namespace
+            Statistic: Sum
           PredictiveScalingMode: "ForecastOnly"
           PredictiveScalingMaxCapacityBehavior: "SetMaxCapacityAboveForecastCapacity"
           PredictiveScalingMaxCapacityBuffer: 25
