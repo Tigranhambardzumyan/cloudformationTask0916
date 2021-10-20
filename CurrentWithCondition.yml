@@ -15,6 +15,10 @@ Parameters:
       - Stage
       - Prod
     ConstraintDescription: must specify the Envirorment
+  RoleName:
+    Type: String
+    Description: Add to name of Role If the Enviorment value is NOT prod
+
 Conditions:
   CreateDevResources: !Equals
     - !Ref EnvironmentValue
@@ -49,6 +53,36 @@ Mappings:
       ASMAX: 5 
       ASMIN: 2
 Resources:
+  MyRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      RoleName: !If [CreateProdResources, !Ref RoleName, NonProdRole123456789]
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+  MyIamInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: MyIamInstanceProfile
+      Path: "/"
+      Roles:
+      - !Ref MyRole
+  
   SG:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -99,6 +133,11 @@ Resources:
     Properties: 
       LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
       LaunchTemplateData: 
+
+        IamInstanceProfile:
+          Arn: !GetAtt
+            - MyIamInstanceProfile
+            - Arn
         ImageId:  !FindInMap [RegionMap, !Ref "AWS::Region", HVM64]
         InstanceType: t2.micro
         KeyName: Tigran
@@ -202,3 +241,5 @@ Resources:
       # Type: network
 #Try to create custom ScalingMetricType      
 #Create a new stack with existing CPU avarge .., when the load is ok, decrise the EC2 instancesa counts to 5 current -
+# надо добавить текстовый параметр в клаудформейшен,
+# и сделать так чтобы он добавлялся к имени роли только в том случае если енв не прод
