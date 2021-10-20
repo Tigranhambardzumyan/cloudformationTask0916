@@ -18,20 +18,20 @@ Parameters:
   RoleName:
     Type: String
     Description: Add to name of Role If the Enviorment value is NOT prod
-
-Conditions:
-  CreateDevResources: !Equals
-    - !Ref EnvironmentValue
-    - Dev
-  CreateQAResources: !Equals
-    - !Ref EnvironmentValue
-    - QA
-  CreateStageResources: !Equals
-    - !Ref EnvironmentValue
-    - Stage
-  CreateProdResources: !Equals 
-    - !Ref EnvironmentValue
-    - Prod
+#Not Reqiuered
+# Conditions:
+#   CreateDevResources: !Equals
+#     - !Ref EnvironmentValue
+#     - Dev
+#   CreateQAResources: !Equals
+#     - !Ref EnvironmentValue
+#     - QA
+#   CreateStageResources: !Equals
+#     - !Ref EnvironmentValue
+#     - Stage
+#   CreateProdResources: !Equals 
+#     - !Ref EnvironmentValue
+#     - Prod
 
 Mappings: 
   RegionMap: 
